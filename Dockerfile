@@ -2,9 +2,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir "numpy>=1.26.0,<2.4.0"
+RUN pip install -r requirements.txt
 
 COPY . .
 

@@ -1,0 +1,23 @@
+.git
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.env
+.idea
+.vscode
+
+# Large runtime data — mounted as volumes in docker-compose
+data/raw
+data/processed
+reports
+
+# Not needed in API image
+frontend
+app
+evals
+*.md
