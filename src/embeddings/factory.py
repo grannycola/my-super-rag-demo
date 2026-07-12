@@ -5,6 +5,8 @@ from __future__ import annotations
 from src.config import Config, get_config
 from src.embeddings.base import EmbeddingModel
 
+_embedding_model: EmbeddingModel | None = None
+
 
 class OpenAIEmbeddingModel(EmbeddingModel):
     def __init__(self, model: str, api_key: str) -> None:
@@ -57,16 +59,22 @@ class SentenceTransformerEmbeddingModel(EmbeddingModel):
 
 
 def create_embedding_model(config: Config | None = None) -> EmbeddingModel:
+    global _embedding_model
+    if _embedding_model is not None:
+        return _embedding_model
+
     config = config or get_config()
     provider = config.embedding_provider.lower()
 
     if provider == "openai":
         if not config.openai_api_key:
             raise ValueError("OPENAI_API_KEY is required for OpenAI embeddings")
-        return OpenAIEmbeddingModel(config.embedding_model, config.openai_api_key)
+        _embedding_model = OpenAIEmbeddingModel(config.embedding_model, config.openai_api_key)
+        return _embedding_model
 
     if provider in SentenceTransformerEmbeddingModel.MODEL_MAP or provider == "sentence-transformers":
         model_key = config.embedding_model if provider == "sentence-transformers" else provider
-        return SentenceTransformerEmbeddingModel(model_key)
+        _embedding_model = SentenceTransformerEmbeddingModel(model_key)
+        return _embedding_model
 
     raise ValueError(f"Unknown embedding provider: {provider}")

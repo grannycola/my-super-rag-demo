@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from src.config import Config, get_config
 
+_reranker: "CrossEncoderReranker | None" = None
+
 
 class CrossEncoderReranker:
     """Rerank retrieved chunks using a cross-encoder model."""
@@ -45,3 +47,10 @@ class CrossEncoderReranker:
             results.append(chunk)
 
         return results
+
+
+def get_reranker(config: Config | None = None) -> CrossEncoderReranker:
+    global _reranker
+    if _reranker is None:
+        _reranker = CrossEncoderReranker(config)
+    return _reranker

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from src.config import Config, get_config
 from src.retrieval.hybrid import HybridRetriever
-from src.reranking.cross_encoder import CrossEncoderReranker
+from src.reranking.cross_encoder import get_reranker
 
 
 def retrieve(
@@ -22,7 +22,7 @@ def retrieve(
     chunks = retriever.retrieve(query, top_k=top_k or config.retrieval_top_k)
 
     if rerank and chunks:
-        reranker = CrossEncoderReranker(config)
+        reranker = get_reranker(config)
         chunks = reranker.rerank(query, chunks, top_k=config.rerank_top_k)
 
     return chunks
