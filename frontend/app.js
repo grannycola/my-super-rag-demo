@@ -1,0 +1,304 @@
+const chatLog = document.getElementById("chat-log");
+const chatForm = document.getElementById("chat-form");
+const questionInput = document.getElementById("question");
+const submitBtn = document.getElementById("submit-btn");
+const btnLabel = submitBtn.querySelector(".btn-label");
+const btnSpinner = submitBtn.querySelector(".btn-spinner");
+const statusEl = document.getElementById("status");
+const statusText = document.getElementById("status-text");
+const logsEl = document.getElementById("logs");
+const clearLogsBtn = document.getElementById("clear-logs");
+const progressBadge = document.getElementById("progress-badge");
+const progressBar = document.getElementById("progress-bar");
+const progressSteps = document.querySelectorAll(".step");
+
+const PIPELINE_STEPS = ["embed", "search", "rerank", "context", "llm", "citations"];
+const RETRIEVE_STEPS = ["embed", "search", "rerank"];
+const GENERATE_STEPS = ["context", "llm", "citations"];
+
+let progressTimer = null;
+
+function nowTime() {
+  return new Date().toLocaleTimeString("en-GB", { hour12: false });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function addLog(type, message, html = null) {
+  const line = document.createElement("div");
+  line.className = `log-line log-${type}`;
+  line.innerHTML = `
+    <span class="log-time">${nowTime()}</span>
+    <span class="log-msg">${html || escapeHtml(message)}</span>
+  `;
+  logsEl.appendChild(line);
+  logsEl.scrollTop = logsEl.scrollHeight;
+}
+
+function logChunk(chunk) {
+  const score = chunk.rerank_score != null
+    ? `rerank ${chunk.rerank_score.toFixed(3)}`
+    : chunk.score != null
+      ? `score ${chunk.score.toFixed(3)}`
+      : "";
+
+  const summaryText = `#${chunk.rank} chunk found${score ? ` · ${score}` : ""}`;
+
+  const html = `
+    <details class="log-chunk-spoiler">
+      <summary>
+        <span class="chunk-arrow" aria-hidden="true">▶</span>
+        <span class="chunk-summary-text">${escapeHtml(summaryText)}</span>
+      </summary>
+      <div class="log-chunk-card">
+        <div class="chunk-title">${escapeHtml(chunk.title || "Untitled")}</div>
+        <div class="chunk-meta">${escapeHtml(chunk.section || "")} · ${escapeHtml(chunk.source_url)}</div>
+        <div class="chunk-snippet">${escapeHtml(chunk.snippet)}</div>
+      </div>
+    </details>
+  `;
+
+  const line = document.createElement("div");
+  line.className = "log-line log-chunk";
+  line.innerHTML = `
+    <span class="log-time">${nowTime()}</span>
+    <span class="log-msg">${html}</span>
+  `;
+  logsEl.appendChild(line);
+  logsEl.scrollTop = logsEl.scrollHeight;
+}
+
+function resetProgress() {
+  clearInterval(progressTimer);
+  progressSteps.forEach((step) => {
+    step.classList.remove("active", "done");
+  });
+  progressBar.classList.remove("indeterminate");
+  progressBar.style.setProperty("--progress", "0%");
+  progressBadge.className = "progress-badge idle";
+  progressBadge.textContent = "Idle";
+}
+
+function setProgressState(state, label) {
+  progressBadge.className = `progress-badge ${state}`;
+  progressBadge.textContent = label;
+}
+
+function setStepActive(stepId) {
+  const idx = PIPELINE_STEPS.indexOf(stepId);
+  progressSteps.forEach((el) => {
+    const id = el.dataset.step;
+    const stepIdx = PIPELINE_STEPS.indexOf(id);
+    el.classList.remove("active");
+    if (stepIdx < idx) el.classList.add("done");
+  });
+  const active = document.querySelector(`.step[data-step="${stepId}"]`);
+  if (active) active.classList.add("active");
+
+  const pct = Math.round(((idx + 0.5) / PIPELINE_STEPS.length) * 100);
+  progressBar.style.setProperty("--progress", `${pct}%`);
+}
+
+function completeThrough(stepId) {
+  const idx = PIPELINE_STEPS.indexOf(stepId);
+  progressSteps.forEach((el) => {
+    const stepIdx = PIPELINE_STEPS.indexOf(el.dataset.step);
+    el.classList.remove("active");
+    if (stepIdx <= idx) el.classList.add("done");
+  });
+  const pct = Math.round(((idx + 1) / PIPELINE_STEPS.length) * 100);
+  progressBar.style.setProperty("--progress", `${pct}%`);
+}
+
+function finishProgress(success) {
+  progressBar.classList.remove("indeterminate");
+  if (success) {
+    progressSteps.forEach((el) => {
+      el.classList.remove("active");
+      el.classList.add("done");
+    });
+    progressBar.style.setProperty("--progress", "100%");
+    setProgressState("done", "Complete");
+  } else {
+    setProgressState("error", "Failed");
+  }
+}
+
+function animateRetrieveSteps() {
+  let i = 0;
+  setStepActive(RETRIEVE_STEPS[0]);
+  progressBar.classList.add("indeterminate");
+
+  progressTimer = setInterval(() => {
+    if (i < RETRIEVE_STEPS.length - 1) {
+      completeThrough(RETRIEVE_STEPS[i]);
+      i += 1;
+      setStepActive(RETRIEVE_STEPS[i]);
+    }
+  }, 900);
+}
+
+function appendMessage(role, html, options = {}) {
+  const div = document.createElement("div");
+  div.className = `message ${role}`;
+  div.innerHTML = html;
+  if (options.markdown) {
+    finalizeAssistantMessage(div);
+  }
+  chatLog.appendChild(div);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  return div;
+}
+
+function appendLoadingMessage(text) {
+  return appendMessage(
+    "assistant loading",
+    `<p>${escapeHtml(text)} <span class="typing-dots"><span></span><span></span><span></span></span></p>`
+  );
+}
+
+function formatCitations(citations) {
+  if (!citations?.length) return "";
+  const items = citations
+    .map((c) => {
+      const id = c.citation_id.replace(/\[|\]/g, "");
+      return `<li id="cite-${id}"><span class="cite-badge">${c.citation_id}</span> <a href="${c.source_url}" target="_blank" rel="noopener">${escapeHtml(c.title || c.source_url)}</a></li>`;
+    })
+    .join("");
+  return `<div class="citations"><h4>Sources</h4><ul>${items}</ul></div>`;
+}
+
+async function loadHealth() {
+  try {
+    const res = await fetch("/api/health");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    document.getElementById("stat-chunks").textContent = data.indexed_chunks.toLocaleString();
+    statusEl.classList.add("ok");
+    statusText.textContent = "Online";
+  } catch {
+    statusEl.classList.add("error");
+    statusText.textContent = "Offline";
+  }
+}
+
+async function loadMetrics() {
+  try {
+    const res = await fetch("/metrics.json");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (typeof data.hit_rate === "number") {
+      document.getElementById("stat-hit-rate").textContent = `${(data.hit_rate * 100).toFixed(0)}%`;
+    }
+  } catch {
+    // optional
+  }
+}
+
+clearLogsBtn.addEventListener("click", () => {
+  logsEl.innerHTML = "";
+  addLog("info", "Logs cleared.");
+});
+
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const question = questionInput.value.trim();
+  if (!question) return;
+
+  appendMessage("user", `<p>${escapeHtml(question)}</p>`);
+  questionInput.value = "";
+  submitBtn.disabled = true;
+  btnLabel.classList.add("hidden");
+  btnSpinner.classList.remove("hidden");
+
+  resetProgress();
+  setProgressState("running", "Running");
+  addLog("info", `Query: "${question}"`);
+
+  const loadingEl = appendLoadingMessage("Running RAG pipeline");
+
+  try {
+    animateRetrieveSteps();
+    addLog("info", "Embedding query (bge-small)…");
+
+    const retrieveRes = await fetch("/api/retrieve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, rerank: true }),
+    });
+
+    clearInterval(progressTimer);
+    progressBar.classList.remove("indeterminate");
+
+    if (!retrieveRes.ok) {
+      const err = await retrieveRes.json().catch(() => ({}));
+      throw new Error(err.detail || `Retrieve failed: HTTP ${retrieveRes.status}`);
+    }
+
+    const retrieveData = await retrieveRes.json();
+    completeThrough("rerank");
+
+    addLog("success", `Retrieved ${retrieveData.total} chunks after rerank.`);
+    retrieveData.chunks.forEach((chunk) => logChunk(chunk));
+
+    if (retrieveData.total === 0) {
+      addLog("error", "No chunks found — check index.");
+      loadingEl.remove();
+      appendMessage("assistant", "<p>No relevant documentation found in the index.</p>");
+      finishProgress(false);
+      return;
+    }
+
+    GENERATE_STEPS.forEach((step, i) => {
+      setTimeout(() => setStepActive(step), i * 400);
+    });
+    addLog("info", "Assembling context and calling Groq LLM…");
+    loadingEl.querySelector("p").firstChild.textContent = "Generating answer… ";
+
+    const generateRes = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question,
+        chunks: retrieveData.chunks,
+      }),
+    });
+
+    if (!generateRes.ok) {
+      const err = await generateRes.json().catch(() => ({}));
+      throw new Error(err.detail || `Generate failed: HTTP ${generateRes.status}`);
+    }
+
+    const data = await generateRes.json();
+    loadingEl.remove();
+
+    completeThrough("citations");
+    addLog("success", `Answer ready · ${data.citations.length} citation(s) · ${data.chunks_used} chunks used.`);
+
+    appendMessage(
+      "assistant",
+      `${renderAssistantContent(data.answer)}${formatCitations(data.citations)}`,
+      { markdown: true }
+    );
+    finishProgress(true);
+  } catch (err) {
+    clearInterval(progressTimer);
+    loadingEl.remove();
+    addLog("error", err.message);
+    appendMessage("error", `<p>Error: ${escapeHtml(err.message)}</p>`);
+    finishProgress(false);
+  } finally {
+    submitBtn.disabled = false;
+    btnLabel.classList.remove("hidden");
+    btnSpinner.classList.add("hidden");
+    questionInput.focus();
+  }
+});
+
+loadHealth();
+loadMetrics();

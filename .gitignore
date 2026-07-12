@@ -1,0 +1,36 @@
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Data & indexes
+data/raw/**/*
+!data/raw/**/.gitkeep
+data/processed/**/*
+!data/processed/**/.gitkeep
+
+# Eval outputs
+evals/results/**/*
+!evals/results/.gitkeep
+reports/**/*
+!reports/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Streamlit
+.streamlit/secrets.toml

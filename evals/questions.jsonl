@@ -1,0 +1,3 @@
+{"id": "q001", "question": "How do I create a simple LangChain chain?", "expected_topics": ["chains", "getting started"]}
+{"id": "q002", "question": "What is a LangChain retriever and how does it work?", "expected_topics": ["retrieval", "retrievers"]}
+{"id": "q003", "question": "How do I use embeddings with LangChain?", "expected_topics": ["embeddings", "vector stores"]}

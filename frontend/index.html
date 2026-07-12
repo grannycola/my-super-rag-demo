@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocsRAG Lab</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="logo">📚</span>
+        <div>
+          <h1>DocsRAG Lab</h1>
+          <p>Production-style RAG for technical documentation</p>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="mini-stat">
+          <span id="stat-chunks">—</span>
+          <small>chunks</small>
+        </div>
+        <div class="mini-stat">
+          <span id="stat-hit-rate">—</span>
+          <small>hit@5</small>
+        </div>
+        <div class="status" id="status">
+          <span class="status-dot"></span>
+          <span id="status-text">Connecting…</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="panel logs-panel">
+      <div class="panel-header">
+        <h2>Logs</h2>
+        <button type="button" class="ghost-btn" id="clear-logs" title="Clear logs">Clear</button>
+      </div>
+      <div class="logs" id="logs">
+        <div class="log-line log-info">
+          <span class="log-time">--:--:--</span>
+          <span class="log-msg">Ready. Submit a question to start the pipeline.</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel chat-panel">
+      <div class="panel-header">
+        <h2>Chat</h2>
+        <span class="panel-header-spacer" aria-hidden="true"></span>
+      </div>
+      <div class="chat-body">
+        <div class="chat-log" id="chat-log">
+          <div class="message assistant">
+            <p>Try <em>“How do I create a LangChain chain?”</em> or <em>“What is a retriever?”</em></p>
+          </div>
+        </div>
+        <form class="chat-form" id="chat-form">
+          <input
+            type="text"
+            id="question"
+            placeholder="Ваш вопрос о документации LangChain…"
+            autocomplete="off"
+            required
+          />
+          <button type="submit" id="submit-btn">
+            <span class="btn-label">Ask</span>
+            <span class="btn-spinner hidden"></span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <aside class="panel progress-panel">
+      <div class="panel-header">
+        <h2>Progress</h2>
+        <span class="progress-badge idle" id="progress-badge">Idle</span>
+      </div>
+      <ul class="progress-steps" id="progress-steps">
+        <li class="step" data-step="embed">
+          <div class="step-icon"><span class="step-dot"></span></div>
+          <div class="step-body">
+            <span class="step-title">Query embedding</span>
+            <span class="step-desc">bge-small encode</span>
+          </div>
+        </li>
+        <li class="step" data-step="search">
+          <div class="step-icon"><span class="step-dot"></span></div>
+          <div class="step-body">
+            <span class="step-title">Vector search</span>
+            <span class="step-desc">Top-k from Chroma</span>
+          </div>
+        </li>
+        <li class="step" data-step="rerank">
+          <div class="step-icon"><span class="step-dot"></span></div>
+          <div class="step-body">
+            <span class="step-title">Cross-encoder rerank</span>
+            <span class="step-desc">Compress to top-5</span>
+          </div>
+        </li>
+        <li class="step" data-step="context">
+          <div class="step-icon"><span class="step-dot"></span></div>
+          <div class="step-body">
+            <span class="step-title">Context assembly</span>
+            <span class="step-desc">Build prompt blocks</span>
+          </div>
+        </li>
+        <li class="step" data-step="llm">
+          <div class="step-icon"><span class="step-dot"></span></div>
+          <div class="step-body">
+            <span class="step-title">Groq LLM</span>
+            <span class="step-desc">Generate answer</span>
+          </div>
+        </li>
+        <li class="step" data-step="citations">
+          <div class="step-icon"><span class="step-dot"></span></div>
+          <div class="step-body">
+            <span class="step-title">Citations</span>
+            <span class="step-desc">Validate sources</span>
+          </div>
+        </li>
+      </ul>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <script src="markdown.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
