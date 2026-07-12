@@ -84,6 +84,32 @@ function enhanceCodeBlocks(root) {
   bindCopyButtons(root);
 }
 
+function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+
+  return new Promise((resolve, reject) => {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      const ok = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (ok) resolve();
+      else reject(new Error("copy command failed"));
+    } catch (err) {
+      document.body.removeChild(textarea);
+      reject(err);
+    }
+  });
+}
+
 function bindCopyButtons(container) {
   container.querySelectorAll(".copy-code-btn").forEach((btn) => {
     if (btn.dataset.bound) return;
@@ -91,15 +117,18 @@ function bindCopyButtons(container) {
 
     btn.addEventListener("click", async () => {
       const code = btn.closest(".code-block")?.querySelector("pre code")?.textContent || "";
+      const prev = btn.textContent;
       try {
-        await navigator.clipboard.writeText(code);
-        const prev = btn.textContent;
+        await copyTextToClipboard(code);
         btn.textContent = "Copied!";
         setTimeout(() => {
           btn.textContent = prev;
         }, 1500);
       } catch {
         btn.textContent = "Failed";
+        setTimeout(() => {
+          btn.textContent = prev;
+        }, 1500);
       }
     });
   });
