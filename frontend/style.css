@@ -1085,7 +1085,7 @@ body {
     left: auto;
     right: auto;
     bottom: auto;
-    margin: 0 0.75rem calc(0.75rem + 36px);
+    margin: 0 0.75rem calc(0.75rem + 44px);
     z-index: 1;
     flex-shrink: 0;
   }
@@ -1096,7 +1096,7 @@ body {
     left: 0;
     top: var(--app-header-height, 60px);
     bottom: 0;
-    width: 44px;
+    width: 72px;
     z-index: 104;
     touch-action: none;
   }
@@ -1111,7 +1111,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    height: 52px;
+    height: 80px;
     z-index: 104;
     touch-action: none;
   }
@@ -1131,17 +1131,23 @@ body {
     bottom: 0;
     transform: translateX(-50%);
     z-index: 105;
-    min-width: 104px;
-    height: 32px;
-    padding: 0.35rem 0.85rem 0.45rem;
+    min-width: 128px;
+    height: 40px;
+    padding: 0.45rem 1rem 0.55rem;
     border: 1px solid var(--border);
     border-bottom: none;
-    border-radius: 12px 12px 0 0;
+    border-radius: 14px 14px 0 0;
     background: linear-gradient(180deg, var(--surface), var(--surface-2));
     color: var(--muted);
-    cursor: pointer;
+    cursor: grab;
+    touch-action: none;
     box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35);
     animation: progressHint 2.4s ease-in-out infinite;
+  }
+
+  .progress-drawer-handle.is-dragging {
+    animation: none;
+    cursor: grabbing;
   }
 
   .progress-drawer-handle:focus-visible {
@@ -1245,17 +1251,23 @@ body {
     left: 0;
     top: calc(var(--app-header-height, 60px) + 18dvh);
     z-index: 105;
-    width: 28px;
-    min-height: 88px;
-    padding: 0.65rem 0.35rem;
+    width: 40px;
+    min-height: 104px;
+    padding: 0.75rem 0.45rem;
     border: 1px solid var(--border);
     border-left: none;
-    border-radius: 0 12px 12px 0;
+    border-radius: 0 14px 14px 0;
     background: linear-gradient(180deg, var(--surface-2), var(--surface));
     color: var(--muted);
-    cursor: pointer;
+    cursor: grab;
+    touch-action: none;
     box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35);
     animation: drawerHint 2.4s ease-in-out infinite;
+  }
+
+  .logs-drawer-handle.is-dragging {
+    animation: none;
+    cursor: grabbing;
   }
 
   .logs-drawer-handle:focus-visible {
@@ -1380,7 +1392,7 @@ body {
   .chat-form {
     flex-direction: column;
     align-items: stretch;
-    margin: 0 0.5rem calc(0.5rem + 36px);
+    margin: 0 0.5rem calc(0.5rem + 44px);
   }
 
   .chat-form input {

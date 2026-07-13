@@ -237,9 +237,29 @@ let progressDrawerOpen = false;
 let logsTouchStartX = 0;
 let logsTouchStartY = 0;
 let logsTouchMode = null;
+let logsSuppressClick = false;
 let progressTouchStartY = 0;
 let progressTouchStartX = 0;
 let progressTouchMode = null;
+let progressSuppressClick = false;
+
+function isLogsCloseTarget(target) {
+  return target === logsPanel;
+}
+
+function isProgressCloseTarget(target) {
+  return target === progressPanel;
+}
+
+function clearLogsDragUi() {
+  logsPanel.classList.remove("is-dragging");
+  logsDrawerHandle?.classList.remove("is-dragging");
+}
+
+function clearProgressDragUi() {
+  progressPanel.classList.remove("is-dragging");
+  progressDrawerHandle?.classList.remove("is-dragging");
+}
 
 function isMobileDrawer() {
   return MOBILE_DRAWER_MQ.matches;
@@ -336,7 +356,8 @@ function handleLogsTouchStart(event) {
   const touch = event.touches[0];
   logsTouchStartX = touch.clientX;
   logsTouchStartY = touch.clientY;
-  logsTouchMode = event.currentTarget === logsPanel ? "close" : "open";
+  logsSuppressClick = false;
+  logsTouchMode = isLogsCloseTarget(event.currentTarget) ? "close" : "open";
 
   if (logsTouchMode === "open" && logsDrawerOpen) {
     logsTouchMode = null;
@@ -348,7 +369,12 @@ function handleLogsTouchStart(event) {
     return;
   }
 
-  logsPanel.classList.add("is-dragging");
+  if (isLogsCloseTarget(event.currentTarget)) {
+    logsPanel.classList.add("is-dragging");
+  } else {
+    logsDrawerHandle?.classList.add("is-dragging");
+    logsPanel.classList.add("is-dragging");
+  }
 }
 
 function handleLogsTouchMove(event) {
@@ -360,18 +386,20 @@ function handleLogsTouchMove(event) {
 
   if (Math.abs(deltaY) > Math.abs(deltaX) * 1.2) {
     logsTouchMode = null;
-    logsPanel.classList.remove("is-dragging");
+    clearLogsDragUi();
     clearLogsDragOffset();
     return;
   }
 
   if (logsTouchMode === "open" && deltaX > 0) {
+    if (deltaX > 8) logsSuppressClick = true;
     event.preventDefault();
     setLogsDragOffset(Math.min(deltaX, logsPanel.offsetWidth));
     return;
   }
 
   if (logsTouchMode === "close" && deltaX < 0) {
+    if (Math.abs(deltaX) > 8) logsSuppressClick = true;
     event.preventDefault();
     if (logsDrawerOpen) {
       logsPanel.classList.remove("is-open");
@@ -389,7 +417,8 @@ function handleProgressTouchStart(event) {
   const touch = event.touches[0];
   progressTouchStartY = touch.clientY;
   progressTouchStartX = touch.clientX;
-  progressTouchMode = event.currentTarget === progressPanel ? "close" : "open";
+  progressSuppressClick = false;
+  progressTouchMode = isProgressCloseTarget(event.currentTarget) ? "close" : "open";
 
   if (progressTouchMode === "open" && progressDrawerOpen) {
     progressTouchMode = null;
@@ -401,7 +430,12 @@ function handleProgressTouchStart(event) {
     return;
   }
 
-  progressPanel.classList.add("is-dragging");
+  if (isProgressCloseTarget(event.currentTarget)) {
+    progressPanel.classList.add("is-dragging");
+  } else {
+    progressDrawerHandle?.classList.add("is-dragging");
+    progressPanel.classList.add("is-dragging");
+  }
 }
 
 function handleProgressTouchMove(event) {
@@ -413,18 +447,20 @@ function handleProgressTouchMove(event) {
 
   if (Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
     progressTouchMode = null;
-    progressPanel.classList.remove("is-dragging");
+    clearProgressDragUi();
     clearProgressDragOffset();
     return;
   }
 
   if (progressTouchMode === "open" && deltaY < 0) {
+    if (Math.abs(deltaY) > 8) progressSuppressClick = true;
     event.preventDefault();
     setProgressDragOffset(Math.min(-deltaY, progressPanel.offsetHeight));
     return;
   }
 
   if (progressTouchMode === "close" && deltaY > 0) {
+    if (deltaY > 8) progressSuppressClick = true;
     event.preventDefault();
     if (progressDrawerOpen) {
       progressPanel.classList.remove("is-open");
@@ -439,7 +475,7 @@ function handleProgressTouchMove(event) {
 function handleProgressTouchEnd(event) {
   if (!isMobileDrawer() || !progressTouchMode) return;
 
-  progressPanel.classList.remove("is-dragging");
+  clearProgressDragUi();
   const touch = event.changedTouches[0];
   const deltaY = touch.clientY - progressTouchStartY;
 
@@ -456,7 +492,7 @@ function handleProgressTouchEnd(event) {
 function handleLogsTouchEnd(event) {
   if (!isMobileDrawer() || !logsTouchMode) return;
 
-  logsPanel.classList.remove("is-dragging");
+  clearLogsDragUi();
   const touch = event.changedTouches[0];
   const deltaX = touch.clientX - logsTouchStartX;
 
@@ -470,42 +506,63 @@ function handleLogsTouchEnd(event) {
   logsTouchMode = null;
 }
 
-logsDrawerHandle.addEventListener("click", openLogsDrawer);
+function bindDrawerTouch(target, handlers) {
+  if (!target) return;
+  target.addEventListener("touchstart", handlers.start, { passive: true });
+  target.addEventListener("touchmove", handlers.move, { passive: false });
+  target.addEventListener("touchend", handlers.end, { passive: true });
+}
+
+const logsTouchHandlers = {
+  start: handleLogsTouchStart,
+  move: handleLogsTouchMove,
+  end: handleLogsTouchEnd,
+};
+
+const progressTouchHandlers = {
+  start: handleProgressTouchStart,
+  move: handleProgressTouchMove,
+  end: handleProgressTouchEnd,
+};
+
+logsDrawerHandle.addEventListener("click", (event) => {
+  if (logsSuppressClick) {
+    logsSuppressClick = false;
+    event.preventDefault();
+    return;
+  }
+  openLogsDrawer();
+});
 closeLogsBtn.addEventListener("click", closeLogsDrawer);
 closeProgressBtn.addEventListener("click", closeProgressDrawer);
 logsBackdrop.addEventListener("click", () => {
   closeLogsDrawer();
   closeProgressDrawer();
 });
-progressDrawerHandle.addEventListener("click", openProgressDrawer);
+progressDrawerHandle.addEventListener("click", (event) => {
+  if (progressSuppressClick) {
+    progressSuppressClick = false;
+    event.preventDefault();
+    return;
+  }
+  openProgressDrawer();
+});
 
-if (logsEdgeSwipe) {
-  logsEdgeSwipe.addEventListener("touchstart", handleLogsTouchStart, { passive: true });
-  logsEdgeSwipe.addEventListener("touchmove", handleLogsTouchMove, { passive: false });
-  logsEdgeSwipe.addEventListener("touchend", handleLogsTouchEnd, { passive: true });
-}
+bindDrawerTouch(logsEdgeSwipe, logsTouchHandlers);
+bindDrawerTouch(logsDrawerHandle, logsTouchHandlers);
+bindDrawerTouch(logsPanel, logsTouchHandlers);
 
-logsPanel.addEventListener("touchstart", handleLogsTouchStart, { passive: true });
-logsPanel.addEventListener("touchmove", handleLogsTouchMove, { passive: false });
-logsPanel.addEventListener("touchend", handleLogsTouchEnd, { passive: true });
-
-if (progressEdgeSwipe) {
-  progressEdgeSwipe.addEventListener("touchstart", handleProgressTouchStart, { passive: true });
-  progressEdgeSwipe.addEventListener("touchmove", handleProgressTouchMove, { passive: false });
-  progressEdgeSwipe.addEventListener("touchend", handleProgressTouchEnd, { passive: true });
-}
-
-progressPanel.addEventListener("touchstart", handleProgressTouchStart, { passive: true });
-progressPanel.addEventListener("touchmove", handleProgressTouchMove, { passive: false });
-progressPanel.addEventListener("touchend", handleProgressTouchEnd, { passive: true });
+bindDrawerTouch(progressEdgeSwipe, progressTouchHandlers);
+bindDrawerTouch(progressDrawerHandle, progressTouchHandlers);
+bindDrawerTouch(progressPanel, progressTouchHandlers);
 
 MOBILE_DRAWER_MQ.addEventListener("change", () => {
   updateAppHeaderHeight();
   if (!isMobileDrawer()) {
     setLogsDrawerOpen(false);
     setProgressDrawerOpen(false);
-    logsPanel.classList.remove("is-dragging");
-    progressPanel.classList.remove("is-dragging");
+    clearLogsDragUi();
+    clearProgressDragUi();
   }
 });
 
