@@ -7,6 +7,10 @@ const btnSpinner = submitBtn.querySelector(".btn-spinner");
 const statusEl = document.getElementById("status");
 const statusText = document.getElementById("status-text");
 const logsEl = document.getElementById("logs");
+const logsPanel = document.getElementById("logs-panel");
+const logsBackdrop = document.getElementById("logs-backdrop");
+const logsDrawerHandle = document.getElementById("logs-drawer-handle");
+const closeLogsBtn = document.getElementById("close-logs");
 const clearLogsBtn = document.getElementById("clear-logs");
 const progressBadge = document.getElementById("progress-badge");
 const progressBar = document.getElementById("progress-bar");
@@ -203,6 +207,139 @@ clearLogsBtn.addEventListener("click", () => {
   logsEl.innerHTML = "";
   addLog("info", "Logs cleared.");
 });
+
+const MOBILE_DRAWER_MQ = window.matchMedia("(max-width: 1100px)");
+const LOGS_EDGE_SWIPE = 28;
+const LOGS_OPEN_THRESHOLD = 72;
+
+let logsDrawerOpen = false;
+let logsTouchStartX = 0;
+let logsTouchStartY = 0;
+let logsTouchMode = null;
+
+function isMobileDrawer() {
+  return MOBILE_DRAWER_MQ.matches;
+}
+
+function updateAppHeaderHeight() {
+  const header = document.querySelector(".header");
+  if (!header) return;
+  document.documentElement.style.setProperty("--app-header-height", `${header.offsetHeight}px`);
+}
+
+function setLogsDragOffset(px) {
+  document.documentElement.style.setProperty("--logs-drag-offset", `${px}px`);
+}
+
+function clearLogsDragOffset() {
+  document.documentElement.style.removeProperty("--logs-drag-offset");
+}
+
+function setLogsDrawerOpen(open) {
+  if (!isMobileDrawer()) return;
+
+  logsDrawerOpen = open;
+  logsPanel.classList.toggle("is-open", open);
+  logsBackdrop.classList.toggle("is-visible", open);
+  logsBackdrop.setAttribute("aria-hidden", open ? "false" : "true");
+  logsDrawerHandle.setAttribute("aria-expanded", open ? "true" : "false");
+  document.body.classList.toggle("logs-drawer-open", open);
+  clearLogsDragOffset();
+}
+
+function openLogsDrawer() {
+  setLogsDrawerOpen(true);
+}
+
+function closeLogsDrawer() {
+  setLogsDrawerOpen(false);
+}
+
+function toggleLogsDrawer() {
+  setLogsDrawerOpen(!logsDrawerOpen);
+}
+
+function handleLogsTouchStart(event) {
+  if (!isMobileDrawer()) return;
+
+  const touch = event.touches[0];
+  logsTouchStartX = touch.clientX;
+  logsTouchStartY = touch.clientY;
+  logsTouchMode = null;
+
+  if (!logsDrawerOpen && touch.clientX <= LOGS_EDGE_SWIPE) {
+    logsTouchMode = "open";
+    logsPanel.classList.add("is-dragging");
+  } else if (logsDrawerOpen && touch.clientX <= logsPanel.offsetWidth + 12) {
+    logsTouchMode = "close";
+    logsPanel.classList.add("is-dragging");
+  }
+}
+
+function handleLogsTouchMove(event) {
+  if (!isMobileDrawer() || !logsTouchMode) return;
+
+  const touch = event.touches[0];
+  const deltaX = touch.clientX - logsTouchStartX;
+  const deltaY = touch.clientY - logsTouchStartY;
+
+  if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaX) < 12) {
+    return;
+  }
+
+  if (logsTouchMode === "open" && deltaX > 0) {
+    event.preventDefault();
+    setLogsDragOffset(Math.min(deltaX, logsPanel.offsetWidth));
+    return;
+  }
+
+  if (logsTouchMode === "close" && deltaX < 0) {
+    event.preventDefault();
+    if (logsDrawerOpen) {
+      logsPanel.classList.remove("is-open");
+      logsBackdrop.classList.remove("is-visible");
+      document.body.classList.remove("logs-drawer-open");
+      logsDrawerOpen = false;
+    }
+    setLogsDragOffset(Math.max(logsPanel.offsetWidth + deltaX, 0));
+  }
+}
+
+function handleLogsTouchEnd(event) {
+  if (!isMobileDrawer() || !logsTouchMode) return;
+
+  logsPanel.classList.remove("is-dragging");
+  const touch = event.changedTouches[0];
+  const deltaX = touch.clientX - logsTouchStartX;
+
+  if (logsTouchMode === "open") {
+    setLogsDrawerOpen(deltaX >= LOGS_OPEN_THRESHOLD);
+  } else if (logsTouchMode === "close") {
+    setLogsDrawerOpen(deltaX > -LOGS_OPEN_THRESHOLD);
+  }
+
+  clearLogsDragOffset();
+  logsTouchMode = null;
+}
+
+logsDrawerHandle.addEventListener("click", openLogsDrawer);
+closeLogsBtn.addEventListener("click", closeLogsDrawer);
+logsBackdrop.addEventListener("click", closeLogsDrawer);
+
+document.addEventListener("touchstart", handleLogsTouchStart, { passive: true });
+document.addEventListener("touchmove", handleLogsTouchMove, { passive: false });
+document.addEventListener("touchend", handleLogsTouchEnd, { passive: true });
+
+MOBILE_DRAWER_MQ.addEventListener("change", () => {
+  updateAppHeaderHeight();
+  if (!isMobileDrawer()) {
+    setLogsDrawerOpen(false);
+    logsPanel.classList.remove("is-dragging");
+  }
+});
+
+window.addEventListener("resize", updateAppHeaderHeight);
+updateAppHeaderHeight();
 
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();

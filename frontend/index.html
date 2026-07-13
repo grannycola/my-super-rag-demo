@@ -34,11 +34,27 @@
     </div>
   </header>
 
+  <div class="logs-drawer-backdrop" id="logs-backdrop" aria-hidden="true"></div>
+  <button
+    type="button"
+    class="logs-drawer-handle"
+    id="logs-drawer-handle"
+    aria-label="Open logs panel"
+    aria-controls="logs-panel"
+    aria-expanded="false"
+  >
+    <span class="logs-drawer-handle-grip" aria-hidden="true"></span>
+    <span class="logs-drawer-handle-label">Logs</span>
+  </button>
+
   <main class="workspace">
-    <aside class="panel logs-panel">
+    <aside class="panel logs-panel" id="logs-panel">
       <div class="panel-header">
         <h2>Logs</h2>
-        <button type="button" class="ghost-btn" id="clear-logs" title="Clear logs">Clear</button>
+        <div class="panel-header-actions">
+          <button type="button" class="ghost-btn" id="clear-logs" title="Clear logs">Clear</button>
+          <button type="button" class="ghost-btn logs-close-btn" id="close-logs" title="Close logs">Close</button>
+        </div>
       </div>
       <div class="logs" id="logs">
         <div class="log-line log-info">
