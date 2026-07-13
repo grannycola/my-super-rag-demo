@@ -10,6 +10,11 @@ const logsEl = document.getElementById("logs");
 const logsPanel = document.getElementById("logs-panel");
 const logsBackdrop = document.getElementById("logs-backdrop");
 const logsDrawerHandle = document.getElementById("logs-drawer-handle");
+const logsEdgeSwipe = document.getElementById("logs-edge-swipe");
+const progressPanel = document.getElementById("progress-panel");
+const progressDrawerHandle = document.getElementById("progress-drawer-handle");
+const progressEdgeSwipe = document.getElementById("progress-edge-swipe");
+const closeProgressBtn = document.getElementById("close-progress");
 const closeLogsBtn = document.getElementById("close-logs");
 const clearLogsBtn = document.getElementById("clear-logs");
 const progressBadge = document.getElementById("progress-badge");
@@ -155,7 +160,6 @@ function scrollChatToBottom() {
   requestAnimationFrame(scroll);
   setTimeout(scroll, 0);
   setTimeout(scroll, 150);
-  setTimeout(scroll, 400);
 }
 
 function appendMessage(role, html, options = {}) {
@@ -225,13 +229,17 @@ clearLogsBtn.addEventListener("click", () => {
 });
 
 const MOBILE_DRAWER_MQ = window.matchMedia("(max-width: 1100px)");
-const LOGS_EDGE_SWIPE = 28;
 const LOGS_OPEN_THRESHOLD = 72;
+const PROGRESS_OPEN_THRESHOLD = 72;
 
 let logsDrawerOpen = false;
+let progressDrawerOpen = false;
 let logsTouchStartX = 0;
 let logsTouchStartY = 0;
 let logsTouchMode = null;
+let progressTouchStartY = 0;
+let progressTouchStartX = 0;
+let progressTouchMode = null;
 
 function isMobileDrawer() {
   return MOBILE_DRAWER_MQ.matches;
@@ -243,6 +251,13 @@ function updateAppHeaderHeight() {
   document.documentElement.style.setProperty("--app-header-height", `${header.offsetHeight}px`);
 }
 
+function syncDrawerBackdrop() {
+  const open = logsDrawerOpen || progressDrawerOpen;
+  logsBackdrop.classList.toggle("is-visible", open);
+  logsBackdrop.setAttribute("aria-hidden", open ? "false" : "true");
+  document.body.classList.toggle("drawer-open", open);
+}
+
 function setLogsDragOffset(px) {
   document.documentElement.style.setProperty("--logs-drag-offset", `${px}px`);
 }
@@ -251,16 +266,44 @@ function clearLogsDragOffset() {
   document.documentElement.style.removeProperty("--logs-drag-offset");
 }
 
-function setLogsDrawerOpen(open) {
+function setProgressDragOffset(px) {
+  document.documentElement.style.setProperty("--progress-drag-offset", `${px}px`);
+}
+
+function clearProgressDragOffset() {
+  document.documentElement.style.removeProperty("--progress-drag-offset");
+}
+
+function setLogsDrawerOpen(open, options = {}) {
+  const { syncOther = true } = options;
   if (!isMobileDrawer()) return;
+
+  if (open && syncOther && progressDrawerOpen) {
+    setProgressDrawerOpen(false, { syncOther: false });
+  }
 
   logsDrawerOpen = open;
   logsPanel.classList.toggle("is-open", open);
-  logsBackdrop.classList.toggle("is-visible", open);
-  logsBackdrop.setAttribute("aria-hidden", open ? "false" : "true");
   logsDrawerHandle.setAttribute("aria-expanded", open ? "true" : "false");
   document.body.classList.toggle("logs-drawer-open", open);
   clearLogsDragOffset();
+  syncDrawerBackdrop();
+}
+
+function setProgressDrawerOpen(open, options = {}) {
+  const { syncOther = true } = options;
+  if (!isMobileDrawer()) return;
+
+  if (open && syncOther && logsDrawerOpen) {
+    setLogsDrawerOpen(false, { syncOther: false });
+  }
+
+  progressDrawerOpen = open;
+  progressPanel.classList.toggle("is-open", open);
+  progressDrawerHandle.setAttribute("aria-expanded", open ? "true" : "false");
+  document.body.classList.toggle("progress-drawer-open", open);
+  clearProgressDragOffset();
+  syncDrawerBackdrop();
 }
 
 function openLogsDrawer() {
@@ -271,6 +314,18 @@ function closeLogsDrawer() {
   setLogsDrawerOpen(false);
 }
 
+function openProgressDrawer() {
+  setProgressDrawerOpen(true);
+}
+
+function closeProgressDrawer() {
+  setProgressDrawerOpen(false);
+}
+
+function toggleProgressDrawer() {
+  setProgressDrawerOpen(!progressDrawerOpen);
+}
+
 function toggleLogsDrawer() {
   setLogsDrawerOpen(!logsDrawerOpen);
 }
@@ -279,23 +334,21 @@ function handleLogsTouchStart(event) {
   if (!isMobileDrawer()) return;
 
   const touch = event.touches[0];
-  const inChat = event.target.closest("#chat-log");
+  logsTouchStartX = touch.clientX;
+  logsTouchStartY = touch.clientY;
+  logsTouchMode = event.currentTarget === logsPanel ? "close" : "open";
 
-  if (inChat && touch.clientX > LOGS_EDGE_SWIPE && !logsDrawerOpen) {
+  if (logsTouchMode === "open" && logsDrawerOpen) {
+    logsTouchMode = null;
     return;
   }
 
-  logsTouchStartX = touch.clientX;
-  logsTouchStartY = touch.clientY;
-  logsTouchMode = null;
-
-  if (!logsDrawerOpen && touch.clientX <= LOGS_EDGE_SWIPE) {
-    logsTouchMode = "open";
-    logsPanel.classList.add("is-dragging");
-  } else if (logsDrawerOpen && touch.clientX <= logsPanel.offsetWidth + 12) {
-    logsTouchMode = "close";
-    logsPanel.classList.add("is-dragging");
+  if (logsTouchMode === "close" && !logsDrawerOpen) {
+    logsTouchMode = null;
+    return;
   }
+
+  logsPanel.classList.add("is-dragging");
 }
 
 function handleLogsTouchMove(event) {
@@ -305,7 +358,10 @@ function handleLogsTouchMove(event) {
   const deltaX = touch.clientX - logsTouchStartX;
   const deltaY = touch.clientY - logsTouchStartY;
 
-  if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaX) < 12) {
+  if (Math.abs(deltaY) > Math.abs(deltaX) * 1.2) {
+    logsTouchMode = null;
+    logsPanel.classList.remove("is-dragging");
+    clearLogsDragOffset();
     return;
   }
 
@@ -319,12 +375,82 @@ function handleLogsTouchMove(event) {
     event.preventDefault();
     if (logsDrawerOpen) {
       logsPanel.classList.remove("is-open");
-      logsBackdrop.classList.remove("is-visible");
       document.body.classList.remove("logs-drawer-open");
       logsDrawerOpen = false;
+      syncDrawerBackdrop();
     }
     setLogsDragOffset(Math.max(logsPanel.offsetWidth + deltaX, 0));
   }
+}
+
+function handleProgressTouchStart(event) {
+  if (!isMobileDrawer()) return;
+
+  const touch = event.touches[0];
+  progressTouchStartY = touch.clientY;
+  progressTouchStartX = touch.clientX;
+  progressTouchMode = event.currentTarget === progressPanel ? "close" : "open";
+
+  if (progressTouchMode === "open" && progressDrawerOpen) {
+    progressTouchMode = null;
+    return;
+  }
+
+  if (progressTouchMode === "close" && !progressDrawerOpen) {
+    progressTouchMode = null;
+    return;
+  }
+
+  progressPanel.classList.add("is-dragging");
+}
+
+function handleProgressTouchMove(event) {
+  if (!isMobileDrawer() || !progressTouchMode) return;
+
+  const touch = event.touches[0];
+  const deltaY = touch.clientY - progressTouchStartY;
+  const deltaX = touch.clientX - progressTouchStartX;
+
+  if (Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+    progressTouchMode = null;
+    progressPanel.classList.remove("is-dragging");
+    clearProgressDragOffset();
+    return;
+  }
+
+  if (progressTouchMode === "open" && deltaY < 0) {
+    event.preventDefault();
+    setProgressDragOffset(Math.min(-deltaY, progressPanel.offsetHeight));
+    return;
+  }
+
+  if (progressTouchMode === "close" && deltaY > 0) {
+    event.preventDefault();
+    if (progressDrawerOpen) {
+      progressPanel.classList.remove("is-open");
+      document.body.classList.remove("progress-drawer-open");
+      progressDrawerOpen = false;
+      syncDrawerBackdrop();
+    }
+    setProgressDragOffset(Math.max(progressPanel.offsetHeight - deltaY, 0));
+  }
+}
+
+function handleProgressTouchEnd(event) {
+  if (!isMobileDrawer() || !progressTouchMode) return;
+
+  progressPanel.classList.remove("is-dragging");
+  const touch = event.changedTouches[0];
+  const deltaY = touch.clientY - progressTouchStartY;
+
+  if (progressTouchMode === "open") {
+    setProgressDrawerOpen(-deltaY >= PROGRESS_OPEN_THRESHOLD);
+  } else if (progressTouchMode === "close") {
+    setProgressDrawerOpen(deltaY < PROGRESS_OPEN_THRESHOLD);
+  }
+
+  clearProgressDragOffset();
+  progressTouchMode = null;
 }
 
 function handleLogsTouchEnd(event) {
@@ -346,17 +472,40 @@ function handleLogsTouchEnd(event) {
 
 logsDrawerHandle.addEventListener("click", openLogsDrawer);
 closeLogsBtn.addEventListener("click", closeLogsDrawer);
-logsBackdrop.addEventListener("click", closeLogsDrawer);
+closeProgressBtn.addEventListener("click", closeProgressDrawer);
+logsBackdrop.addEventListener("click", () => {
+  closeLogsDrawer();
+  closeProgressDrawer();
+});
+progressDrawerHandle.addEventListener("click", openProgressDrawer);
 
-document.addEventListener("touchstart", handleLogsTouchStart, { passive: true });
-document.addEventListener("touchmove", handleLogsTouchMove, { passive: false });
-document.addEventListener("touchend", handleLogsTouchEnd, { passive: true });
+if (logsEdgeSwipe) {
+  logsEdgeSwipe.addEventListener("touchstart", handleLogsTouchStart, { passive: true });
+  logsEdgeSwipe.addEventListener("touchmove", handleLogsTouchMove, { passive: false });
+  logsEdgeSwipe.addEventListener("touchend", handleLogsTouchEnd, { passive: true });
+}
+
+logsPanel.addEventListener("touchstart", handleLogsTouchStart, { passive: true });
+logsPanel.addEventListener("touchmove", handleLogsTouchMove, { passive: false });
+logsPanel.addEventListener("touchend", handleLogsTouchEnd, { passive: true });
+
+if (progressEdgeSwipe) {
+  progressEdgeSwipe.addEventListener("touchstart", handleProgressTouchStart, { passive: true });
+  progressEdgeSwipe.addEventListener("touchmove", handleProgressTouchMove, { passive: false });
+  progressEdgeSwipe.addEventListener("touchend", handleProgressTouchEnd, { passive: true });
+}
+
+progressPanel.addEventListener("touchstart", handleProgressTouchStart, { passive: true });
+progressPanel.addEventListener("touchmove", handleProgressTouchMove, { passive: false });
+progressPanel.addEventListener("touchend", handleProgressTouchEnd, { passive: true });
 
 MOBILE_DRAWER_MQ.addEventListener("change", () => {
   updateAppHeaderHeight();
   if (!isMobileDrawer()) {
     setLogsDrawerOpen(false);
+    setProgressDrawerOpen(false);
     logsPanel.classList.remove("is-dragging");
+    progressPanel.classList.remove("is-dragging");
   }
 });
 

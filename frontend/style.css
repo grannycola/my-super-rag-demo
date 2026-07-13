@@ -199,6 +199,22 @@ body {
   display: none;
 }
 
+.logs-edge-swipe {
+  display: none;
+}
+
+.progress-edge-swipe {
+  display: none;
+}
+
+.progress-drawer-handle {
+  display: none;
+}
+
+.progress-close-btn {
+  display: none;
+}
+
 .ghost-btn {
   background: transparent;
   border: 1px solid var(--border);
@@ -966,11 +982,29 @@ body {
   }
 
   .header {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
   }
 
   .header-inner {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .brand {
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .brand h1 {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .logo {
+    font-size: 1.15rem;
   }
 
   .brand p {
@@ -978,11 +1012,20 @@ body {
   }
 
   .header-stats {
-    gap: 0.75rem;
+    gap: 0.5rem;
+    flex-shrink: 0;
   }
 
   .mini-stat {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  .mini-stat small {
+    font-size: 0.58rem;
+  }
+
+  .status {
+    font-size: 0.72rem;
   }
 
   .workspace {
@@ -992,20 +1035,27 @@ body {
     min-height: 0;
   }
 
+  .chat-panel .panel-header {
+    display: none;
+  }
+
   .chat-panel {
     order: 1;
     flex: 1 1 0;
     min-height: 0;
     overflow: hidden;
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
   }
 
   .chat-body {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
     flex: 1 1 0;
     min-height: 0;
+    height: 0;
     overflow: hidden;
   }
 
@@ -1014,15 +1064,20 @@ body {
   }
 
   .chat-log {
-    position: static;
-    inset: auto;
+    position: relative;
+    flex: 1 1 0;
+    height: 0;
     min-height: 0;
-    padding: 1rem;
-    padding-bottom: 1rem;
-    overflow-y: auto;
+    padding: 0.75rem;
+    overflow-y: scroll;
     overflow-x: hidden;
+    overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+  }
+
+  .chat-log .message {
+    flex-shrink: 0;
   }
 
   .chat-form {
@@ -1030,8 +1085,108 @@ body {
     left: auto;
     right: auto;
     bottom: auto;
-    margin: 0 0.75rem 0.75rem;
+    margin: 0 0.75rem calc(0.75rem + 36px);
     z-index: 1;
+    flex-shrink: 0;
+  }
+
+  .logs-edge-swipe {
+    display: block;
+    position: fixed;
+    left: 0;
+    top: var(--app-header-height, 60px);
+    bottom: 0;
+    width: 44px;
+    z-index: 104;
+    touch-action: none;
+  }
+
+  body.logs-drawer-open .logs-edge-swipe {
+    display: none;
+  }
+
+  .progress-edge-swipe {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 52px;
+    z-index: 104;
+    touch-action: none;
+  }
+
+  body.progress-drawer-open .progress-edge-swipe {
+    display: none;
+  }
+
+  .progress-drawer-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    z-index: 105;
+    min-width: 104px;
+    height: 32px;
+    padding: 0.35rem 0.85rem 0.45rem;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    color: var(--muted);
+    cursor: pointer;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35);
+    animation: progressHint 2.4s ease-in-out infinite;
+  }
+
+  .progress-drawer-handle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  body.progress-drawer-open .progress-drawer-handle {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(120%);
+  }
+
+  .progress-drawer-handle-grip {
+    width: 34px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--accent) 20%,
+      var(--accent) 80%,
+      transparent 100%
+    );
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  .progress-drawer-handle-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  @keyframes progressHint {
+    0%, 100% {
+      transform: translateX(-50%) translateY(0);
+      box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35);
+    }
+    50% {
+      transform: translateX(-50%) translateY(-3px);
+      box-shadow: 0 -8px 22px rgba(79, 140, 255, 0.25);
+    }
   }
 
   .logs-panel {
@@ -1150,10 +1305,37 @@ body {
   }
 
   .progress-panel {
-    order: 2;
-    max-height: 22dvh;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: min(52dvh, 360px);
+    max-height: none;
+    z-index: 120;
+    transform: translateY(calc(100% - var(--progress-drag-offset, 0px)));
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    border-top: 1px solid var(--border);
     border-left: none;
-    flex-shrink: 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
+    order: unset;
+    flex-shrink: unset;
+    touch-action: pan-y;
+  }
+
+  .progress-panel.is-open {
+    transform: translateY(0);
+  }
+
+  .progress-panel.is-dragging {
+    transition: none;
+  }
+
+  .progress-close-btn {
+    display: inline-flex;
+  }
+
+  .progress-steps {
+    padding: 0.75rem 1rem;
   }
 
   .message {
@@ -1179,13 +1361,26 @@ body {
 }
 
 @media (max-width: 480px) {
+  .header {
+    padding: 0.4rem 0.65rem;
+  }
+
+  .brand h1 {
+    font-size: 0.88rem;
+  }
+
   .header-stats .mini-stat:last-of-type {
+    display: none;
+  }
+
+  .status-text {
     display: none;
   }
 
   .chat-form {
     flex-direction: column;
     align-items: stretch;
+    margin: 0 0.5rem calc(0.5rem + 36px);
   }
 
   .chat-form input {
@@ -1198,9 +1393,5 @@ body {
   .chat-form button {
     width: 100%;
     height: 48px;
-  }
-
-  .progress-panel {
-    max-height: 18dvh;
   }
 }

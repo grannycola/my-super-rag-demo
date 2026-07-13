@@ -35,6 +35,8 @@
   </header>
 
   <div class="logs-drawer-backdrop" id="logs-backdrop" aria-hidden="true"></div>
+  <div class="logs-edge-swipe" id="logs-edge-swipe" aria-hidden="true"></div>
+  <div class="progress-edge-swipe" id="progress-edge-swipe" aria-hidden="true"></div>
   <button
     type="button"
     class="logs-drawer-handle"
@@ -45,6 +47,18 @@
   >
     <span class="logs-drawer-handle-grip" aria-hidden="true"></span>
     <span class="logs-drawer-handle-label">Logs</span>
+  </button>
+
+  <button
+    type="button"
+    class="progress-drawer-handle"
+    id="progress-drawer-handle"
+    aria-label="Open progress panel"
+    aria-controls="progress-panel"
+    aria-expanded="false"
+  >
+    <span class="progress-drawer-handle-grip" aria-hidden="true"></span>
+    <span class="progress-drawer-handle-label">Progress</span>
   </button>
 
   <main class="workspace">
@@ -91,10 +105,13 @@
       </div>
     </section>
 
-    <aside class="panel progress-panel">
+    <aside class="panel progress-panel" id="progress-panel">
       <div class="panel-header">
         <h2>Progress</h2>
-        <span class="progress-badge idle" id="progress-badge">Idle</span>
+        <div class="panel-header-actions">
+          <span class="progress-badge idle" id="progress-badge">Idle</span>
+          <button type="button" class="ghost-btn progress-close-btn" id="close-progress" title="Close progress">Close</button>
+        </div>
       </div>
       <ul class="progress-steps" id="progress-steps">
         <li class="step" data-step="embed">
