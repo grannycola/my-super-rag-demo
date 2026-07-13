@@ -60,6 +60,7 @@ function enhanceCodeBlocks(root) {
     const code = pre.querySelector("code");
     if (!code) return;
 
+    const rawCode = code.textContent || "";
     const lang = extractLanguage(code);
 
     if (typeof hljs !== "undefined") {
@@ -76,6 +77,7 @@ function enhanceCodeBlocks(root) {
       `<span class="code-lang">${escapeHtml(lang)}</span>` +
       `<button type="button" class="copy-code-btn">Copy</button>` +
       `</div>`;
+    wrapper.dataset.code = rawCode;
 
     pre.parentNode.insertBefore(wrapper, pre);
     wrapper.appendChild(pre);
@@ -84,30 +86,58 @@ function enhanceCodeBlocks(root) {
   bindCopyButtons(root);
 }
 
-function copyTextToClipboard(text) {
-  if (navigator.clipboard?.writeText && window.isSecureContext) {
-    return navigator.clipboard.writeText(text);
+async function copyTextToClipboard(text) {
+  if (!text) {
+    throw new Error("empty code");
   }
 
-  return new Promise((resolve, reject) => {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.setAttribute("readonly", "");
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
-
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
     try {
-      const ok = document.execCommand("copy");
-      document.body.removeChild(textarea);
-      if (ok) resolve();
-      else reject(new Error("copy command failed"));
-    } catch (err) {
-      document.body.removeChild(textarea);
-      reject(err);
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall back for browsers that expose clipboard API but reject the write.
     }
-  });
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+
+  document.body.removeChild(textarea);
+
+  if (copied) {
+    return;
+  }
+
+  throw new Error("copy failed");
+}
+
+function getCodeBlockText(block) {
+  if (!block) return "";
+
+  const stored = block.dataset.code;
+  if (stored) {
+    return stored;
+  }
+
+  return block.querySelector("pre code")?.textContent || "";
 }
 
 function bindCopyButtons(container) {
@@ -115,21 +145,24 @@ function bindCopyButtons(container) {
     if (btn.dataset.bound) return;
     btn.dataset.bound = "true";
 
-    btn.addEventListener("click", async () => {
-      const code = btn.closest(".code-block")?.querySelector("pre code")?.textContent || "";
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const block = btn.closest(".code-block");
+      const code = getCodeBlockText(block);
       const prev = btn.textContent;
+
       try {
         await copyTextToClipboard(code);
         btn.textContent = "Copied!";
-        setTimeout(() => {
-          btn.textContent = prev;
-        }, 1500);
       } catch {
         btn.textContent = "Failed";
-        setTimeout(() => {
-          btn.textContent = prev;
-        }, 1500);
       }
+
+      setTimeout(() => {
+        btn.textContent = prev;
+      }, 1500);
     });
   });
 }
