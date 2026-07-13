@@ -82,3 +82,4 @@ class HealthResponse(BaseModel):
     status: str
     vector_store: str
     indexed_chunks: int
+    retrieval_hit_rate: float | None = None

@@ -1,5 +1,7 @@
 """Tests for FastAPI endpoints."""
 
+import json
+
 from fastapi.testclient import TestClient
 
 from src.api.app import create_app
@@ -12,6 +14,18 @@ def test_health_endpoint():
     data = response.json()
     assert data["status"] == "ok"
     assert "vector_store" in data
+    assert "retrieval_hit_rate" in data
+
+
+def test_health_includes_retrieval_hit_rate(tmp_path, monkeypatch):
+    report_path = tmp_path / "retrieval_eval.json"
+    report_path.write_text(json.dumps({"hit_rate": 0.4}), encoding="utf-8")
+    monkeypatch.setenv("REPORTS_DIR", str(tmp_path))
+
+    client = TestClient(create_app())
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["retrieval_hit_rate"] == 0.4
 
 
 def test_ingest_requires_admin_key(monkeypatch):

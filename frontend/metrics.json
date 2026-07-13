@@ -1,0 +1,138 @@
+{
+  "total": 10,
+  "top_k": 5,
+  "hits": 4,
+  "hit_rate": 0.4,
+  "results": [
+    {
+      "id": "q001",
+      "question": "How do I use LangChain Runnable sequences?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/langchain-runnable.md",
+      "found": true,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/langchain-runnable.md",
+        "https://docs.langchain.com/langsmith/cli.md",
+        "https://docs.langchain.com/langsmith/evaluate-llm-application.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md"
+      ]
+    },
+    {
+      "id": "q002",
+      "question": "How do I evaluate a RAG pipeline in LangSmith?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/evaluate-rag-tutorial.md",
+      "found": false,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/evaluate-on-intermediate-steps.md",
+        "https://docs.langchain.com/langsmith/evaluate-with-retry.md",
+        "https://docs.langchain.com/langsmith/assertions.md",
+        "https://docs.langchain.com/langsmith/evaluation-quickstart.md",
+        "https://docs.langchain.com/langsmith/evaluation-concepts.md"
+      ]
+    },
+    {
+      "id": "q003",
+      "question": "How do I log retriever traces in LangSmith?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/log-retriever-trace.md",
+      "found": false,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md",
+        "https://docs.langchain.com/langsmith/annotate-code.md"
+      ]
+    },
+    {
+      "id": "q004",
+      "question": "How do I get started with LangSmith observability?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/observability-quickstart.md",
+      "found": false,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md",
+        "https://docs.langchain.com/langsmith/evaluation.md",
+        "https://docs.langchain.com/langsmith/evaluate-with-opentelemetry.md",
+        "https://docs.langchain.com/langsmith/application-structure.md"
+      ]
+    },
+    {
+      "id": "q005",
+      "question": "How do I create a prompt in LangSmith?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/create-a-prompt.md",
+      "found": false,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md"
+      ]
+    },
+    {
+      "id": "q006",
+      "question": "What is the prompt engineering quickstart in LangSmith?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/prompt-engineering-quickstart.md",
+      "found": false,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md"
+      ]
+    },
+    {
+      "id": "q007",
+      "question": "How do I develop agents with LangSmith?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/develop-agents-overview.md",
+      "found": true,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/fleet/index.md",
+        "https://docs.langchain.com/langsmith/fleet/index.md",
+        "https://docs.langchain.com/langsmith/deployment-quickstart-da.md",
+        "https://docs.langchain.com/langsmith/agent-server.md",
+        "https://docs.langchain.com/langsmith/develop-agents-overview.md"
+      ]
+    },
+    {
+      "id": "q008",
+      "question": "How do I run chat evaluation in LangSmith?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/chat-evaluation.md",
+      "found": false,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md"
+      ]
+    },
+    {
+      "id": "q009",
+      "question": "What is the LangSmith deployment quickstart?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/deployment-quickstart.md",
+      "found": true,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/deployment-quickstart.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/fleet/self-hosted-link.md"
+      ]
+    },
+    {
+      "id": "q010",
+      "question": "How do I evaluate a chatbot with LangSmith?",
+      "expected_source_url": "https://docs.langchain.com/langsmith/evaluate-chatbot-tutorial.md",
+      "found": true,
+      "retrieved_urls": [
+        "https://docs.langchain.com/langsmith/evaluate-chatbot-tutorial.md",
+        "https://docs.langchain.com/langsmith/evaluation.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md",
+        "https://docs.langchain.com/langsmith/chat-observability.md"
+      ]
+    }
+  ]
+}

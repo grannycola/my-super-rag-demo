@@ -188,12 +188,18 @@ function formatCitations(citations) {
   return `<div class="citations"><h4>Sources</h4><ul>${items}</ul></div>`;
 }
 
+function setHitRate(hitRate) {
+  if (typeof hitRate !== "number" || Number.isNaN(hitRate)) return;
+  document.getElementById("stat-hit-rate").textContent = `${(hitRate * 100).toFixed(0)}%`;
+}
+
 async function loadHealth() {
   try {
-    const res = await fetch("/api/health");
+    const res = await fetch("/api/health", { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     document.getElementById("stat-chunks").textContent = data.indexed_chunks.toLocaleString();
+    setHitRate(data.retrieval_hit_rate);
     statusEl.classList.add("ok");
     statusText.textContent = "Online";
   } catch {
@@ -204,14 +210,12 @@ async function loadHealth() {
 
 async function loadMetrics() {
   try {
-    const res = await fetch("/metrics.json");
+    const res = await fetch(`/metrics.json?v=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) return;
     const data = await res.json();
-    if (typeof data.hit_rate === "number") {
-      document.getElementById("stat-hit-rate").textContent = `${(data.hit_rate * 100).toFixed(0)}%`;
-    }
+    setHitRate(data.hit_rate);
   } catch {
-    // optional
+    // optional fallback
   }
 }
 

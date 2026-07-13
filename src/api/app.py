@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from fastapi import Depends, FastAPI, HTTPException
 
 from src import chunk, embed, evaluate, generate, ingest
@@ -19,7 +21,7 @@ from src.api.schemas import (
     RetrieveResponse,
     RetrievedChunk,
 )
-from src.config import get_config
+from src.config import Config, get_config
 from src.loaders.url_manifest import resolve_source_url
 from src.vectorstore.factory import create_vector_store
 
@@ -40,6 +42,17 @@ def create_app() -> FastAPI:
             }
         }
     }
+
+    def _load_retrieval_hit_rate(config: Config) -> float | None:
+        report_path = config.reports_dir / "retrieval_eval.json"
+        if not report_path.is_file():
+            return None
+        try:
+            data = json.loads(report_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        hit_rate = data.get("hit_rate")
+        return hit_rate if isinstance(hit_rate, (int, float)) else None
 
     def _chunk_to_retrieved(rank: int, chunk: dict) -> RetrievedChunk:
         text = chunk.get("text", "")
@@ -70,6 +83,7 @@ def create_app() -> FastAPI:
             status="ok",
             vector_store=config.vector_store,
             indexed_chunks=count,
+            retrieval_hit_rate=_load_retrieval_hit_rate(config),
         )
 
     @app.post(

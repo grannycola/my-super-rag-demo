@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from src.config import Config, get_config
-from src.evaluation.metrics import check_source_in_top_k
+from src.evaluation.metrics import check_source_in_top_k, resolve_chunk_source_url
 from src.retrieve import retrieve
 
 REPORT_FILENAME = "retrieval_eval.json"
@@ -40,7 +40,7 @@ def evaluate_retrieval(
         expected_url = item.get("expected_source_url", "")
 
         chunks = retrieve(question, top_k=top_k, rerank=False, config=config)
-        retrieved_urls = [c.get("source_url", "") for c in chunks[:top_k]]
+        retrieved_urls = [resolve_chunk_source_url(c) for c in chunks[:top_k]]
         found = check_source_in_top_k(chunks, expected_url, top_k) if expected_url else False
 
         if found:
