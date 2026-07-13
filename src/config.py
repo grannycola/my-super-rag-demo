@@ -49,6 +49,9 @@ class Config:
     # Logging
     log_level: str
 
+    # Admin endpoints (/ingest, /evaluate)
+    admin_api_key: str
+
 
 def get_config() -> Config:
     return Config(
@@ -74,4 +77,5 @@ def get_config() -> Config:
         eval_questions_path=PROJECT_ROOT / os.getenv("EVAL_QUESTIONS_PATH", "data/eval_questions.jsonl"),
         reports_dir=PROJECT_ROOT / os.getenv("REPORTS_DIR", "reports"),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
+        admin_api_key=os.getenv("ADMIN_API_KEY", ""),
     )

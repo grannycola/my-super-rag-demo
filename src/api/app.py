@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 
 from src import chunk, embed, evaluate, generate, ingest
+from src.api.auth import require_admin_key
 from src.api.schemas import (
     EvaluateResponse,
     GenerateRequest,
@@ -29,6 +30,16 @@ def create_app() -> FastAPI:
         description="Production-style RAG for technical documentation",
         version="0.1.0",
     )
+
+    app.openapi_components = {
+        "securitySchemes": {
+            "AdminApiKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-Admin-Key",
+            }
+        }
+    }
 
     def _chunk_to_retrieved(rank: int, chunk: dict) -> RetrievedChunk:
         text = chunk.get("text", "")
@@ -61,7 +72,12 @@ def create_app() -> FastAPI:
             indexed_chunks=count,
         )
 
-    @app.post("/ingest", response_model=IngestResponse)
+    @app.post(
+        "/ingest",
+        response_model=IngestResponse,
+        dependencies=[Depends(require_admin_key)],
+        openapi_extra={"security": [{"AdminApiKey": []}]},
+    )
     def ingest_docs(request: IngestRequest) -> IngestResponse:
         try:
             paths = ingest.ingest(urls=request.urls, source=request.source)
@@ -134,7 +150,12 @@ def create_app() -> FastAPI:
             chunks_used=len(result.get("context_chunks", chunks)),
         )
 
-    @app.post("/evaluate", response_model=EvaluateResponse)
+    @app.post(
+        "/evaluate",
+        response_model=EvaluateResponse,
+        dependencies=[Depends(require_admin_key)],
+        openapi_extra={"security": [{"AdminApiKey": []}]},
+    )
     def run_evaluation() -> EvaluateResponse:
         try:
             report = evaluate.evaluate()
