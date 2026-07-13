@@ -27,6 +27,11 @@
   padding: 0;
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
@@ -35,6 +40,8 @@ body {
   min-height: 100dvh;
   height: 100dvh;
   overflow: hidden;
+  overflow-x: hidden;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -124,7 +131,13 @@ body {
   grid-template-columns: 320px 1fr 280px;
   flex: 1;
   min-height: 0;
+  min-width: 0;
   gap: 0;
+  max-width: 100%;
+}
+
+.workspace > * {
+  min-height: 0;
 }
 
 .panel {
@@ -313,14 +326,22 @@ body {
 .chat-panel {
   background: var(--bg);
   border-right: none;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-body {
+  --chat-form-offset: 6.5rem;
   position: relative;
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   isolation: isolate;
 }
 
@@ -337,23 +358,30 @@ body {
 }
 
 .chat-log {
-  flex: 1;
+  position: absolute;
+  inset: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1.25rem;
-  padding-bottom: 6.5rem;
+  padding-bottom: var(--chat-form-offset);
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .message {
   padding: 0.875rem 1rem;
   border-radius: 12px;
   max-width: 88%;
+  min-width: 0;
+  overflow: hidden;
   animation: msgIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  line-height: 1.5;
 }
 
 @keyframes msgIn {
@@ -369,6 +397,8 @@ body {
 
 .message.user {
   align-self: flex-end;
+  display: flex;
+  align-items: center;
   background: linear-gradient(135deg, var(--user-bg), #1f4068);
   border: 1px solid rgba(79, 140, 255, 0.2);
 }
@@ -379,10 +409,24 @@ body {
   border: 1px solid var(--border);
   max-width: 96%;
   width: 96%;
+  min-width: 0;
 }
 
 .message p {
+  margin: 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.message.loading p {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  min-height: 1.5em;
+  color: var(--muted);
 }
 
 /* Markdown in assistant messages */
@@ -390,6 +434,10 @@ body {
   font-size: 0.95rem;
   line-height: 1.65;
   color: var(--text);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .markdown-body > *:first-child {
@@ -445,6 +493,8 @@ body {
 .markdown-body a {
   color: var(--accent);
   text-decoration: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .markdown-body a:hover {
@@ -475,6 +525,8 @@ body {
   overflow: hidden;
   border: 1px solid var(--border);
   background: #0d1117;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .code-block-header {
@@ -513,8 +565,10 @@ body {
   margin: 0;
   padding: 1rem;
   overflow-x: auto;
+  max-width: 100%;
   background: #0d1117;
   white-space: pre;
+  -webkit-overflow-scrolling: touch;
 }
 
 .code-block pre code {
@@ -535,10 +589,19 @@ body {
 }
 
 .markdown-body table {
+  display: block;
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
   margin: 0.75rem 0;
   font-size: 0.85rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
 }
 
 .markdown-body th,
@@ -550,13 +613,6 @@ body {
 
 .markdown-body th {
   background: var(--surface-3);
-}
-
-.message.loading p {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  color: var(--muted);
 }
 
 .message.error {
@@ -651,6 +707,7 @@ body {
   bottom: 1rem;
   z-index: 3;
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
   border: 1px solid var(--border);
@@ -663,13 +720,15 @@ body {
 
 .chat-form input {
   flex: 1;
-  padding: 0.875rem 1rem;
-  min-height: 48px;
+  min-width: 0;
+  height: 48px;
+  padding: 0 1rem;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--text);
   font-size: 0.95rem;
+  line-height: 1.25;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -681,12 +740,17 @@ body {
 
 .chat-form button {
   position: relative;
-  padding: 0.75rem 1.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 1.35rem;
   background: linear-gradient(135deg, var(--accent), #6366f1);
   color: white;
   border: none;
   border-radius: 10px;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   min-width: 80px;
   transition: transform 0.15s, opacity 0.15s;
@@ -922,17 +986,52 @@ body {
   }
 
   .workspace {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-height: 0;
   }
 
   .chat-panel {
     order: 1;
+    flex: 1 1 0;
     min-height: 0;
+    overflow: hidden;
     border-right: none;
     border-bottom: 1px solid var(--border);
+  }
+
+  .chat-body {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .chat-body::before {
+    display: none;
+  }
+
+  .chat-log {
+    position: static;
+    inset: auto;
+    min-height: 0;
+    padding: 1rem;
+    padding-bottom: 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .chat-form {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin: 0 0.75rem 0.75rem;
+    z-index: 1;
   }
 
   .logs-panel {
@@ -1052,23 +1151,20 @@ body {
 
   .progress-panel {
     order: 2;
-    max-height: 28dvh;
+    max-height: 22dvh;
     border-left: none;
-  }
-
-  .chat-form {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 0.75rem;
-  }
-
-  .chat-log {
-    padding: 1rem;
-    padding-bottom: 6rem;
+    flex-shrink: 0;
   }
 
   .message {
     max-width: 100%;
+    width: 100%;
+  }
+
+  .message.user {
+    max-width: 92%;
+    width: auto;
+    align-self: flex-end;
   }
 
   .message.assistant {
@@ -1087,15 +1183,24 @@ body {
     display: none;
   }
 
-  .chat-log {
-    padding-bottom: 9.5rem;
-  }
-
   .chat-form {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chat-form input {
+    line-height: 1.4;
+    height: auto;
+    min-height: 48px;
+    padding: 0.75rem 1rem;
   }
 
   .chat-form button {
     width: 100%;
+    height: 48px;
+  }
+
+  .progress-panel {
+    max-height: 18dvh;
   }
 }

@@ -146,6 +146,18 @@ function animateRetrieveSteps() {
   }, 900);
 }
 
+function scrollChatToBottom() {
+  const scroll = () => {
+    chatLog.scrollTop = chatLog.scrollHeight;
+  };
+
+  scroll();
+  requestAnimationFrame(scroll);
+  setTimeout(scroll, 0);
+  setTimeout(scroll, 150);
+  setTimeout(scroll, 400);
+}
+
 function appendMessage(role, html, options = {}) {
   const div = document.createElement("div");
   div.className = `message ${role}`;
@@ -154,7 +166,7 @@ function appendMessage(role, html, options = {}) {
     finalizeAssistantMessage(div);
   }
   chatLog.appendChild(div);
-  chatLog.scrollTop = chatLog.scrollHeight;
+  scrollChatToBottom();
   return div;
 }
 
@@ -263,6 +275,12 @@ function handleLogsTouchStart(event) {
   if (!isMobileDrawer()) return;
 
   const touch = event.touches[0];
+  const inChat = event.target.closest("#chat-log");
+
+  if (inChat && touch.clientX > LOGS_EDGE_SWIPE && !logsDrawerOpen) {
+    return;
+  }
+
   logsTouchStartX = touch.clientX;
   logsTouchStartY = touch.clientY;
   logsTouchMode = null;
@@ -422,6 +440,7 @@ chatForm.addEventListener("submit", async (e) => {
       `${renderAssistantContent(data.answer)}${formatCitations(data.citations)}`,
       { markdown: true }
     );
+    scrollChatToBottom();
     finishProgress(true);
   } catch (err) {
     clearInterval(progressTimer);
